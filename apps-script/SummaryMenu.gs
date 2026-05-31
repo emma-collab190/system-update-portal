@@ -27,7 +27,7 @@ function generateSummaryForSelected() {
 
   for (let i = 0; i < numRows; i++) {
     const row = startRow + i;
-    if (row === 1) continue; // skip header row
+    if (row === 1) continue;
     const content = String(sheet.getRange(row, contentCol).getValue()).trim();
     if (!content) continue;
 
@@ -36,7 +36,7 @@ function generateSummaryForSelected() {
       sheet.getRange(row, summaryCol).setValue(summary);
       updated++;
     }
-    Utilities.sleep(600); // respect API rate limit
+    Utilities.sleep(600);
   }
 
   invalidateCache();
@@ -45,7 +45,7 @@ function generateSummaryForSelected() {
 
 function generateOneSummary(content) {
   try {
-    return callClaude(
+    return callGemini(
       `請將以下系統更新內容濃縮成20字以內的繁體中文摘要，只回傳摘要文字，不要加任何前綴或說明：\n\n${content.slice(0, 500)}`,
       '你是摘要助理，只輸出摘要，不解釋、不補充。'
     );

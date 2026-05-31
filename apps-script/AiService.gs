@@ -1,5 +1,5 @@
-const LLM_PROVIDER = 'anthropic';
-const LLM_MODEL    = 'claude-haiku-4-5-20251001';
+const LLM_PROVIDER = 'google';
+const LLM_MODEL    = 'gemini-2.0-flash';
 
 const SYSTEM_PROMPT = `【最高優先規則】
 你只能根據下方提供的更新紀錄回答問題。
@@ -38,7 +38,7 @@ function askHandler(question) {
     `[${r.date}] 系統:${r.system} | 類型:${r.type} | 影響:${r.impact || '未標示'} | 摘要:${r.summary} | 說明:${r.content} | 部門:${r.relDept} | #${r.redmineNo}`
   ).join('\n');
 
-  const answer = callClaude(question, `${SYSTEM_PROMPT}\n\n更新資料如下：\n${dataStr}`);
+  const answer = callGemini(question, `${SYSTEM_PROMPT}\n\n更新資料如下：\n${dataStr}`);
 
   const sources = relevant.slice(0, 5).map(r => ({
     redmineNo: r.redmineNo,
@@ -51,27 +51,30 @@ function askHandler(question) {
   return { answer, sources };
 }
 
-function callClaude(userMessage, systemPrompt) {
+function callGemini(userMessage, systemPrompt) {
   const props  = PropertiesService.getScriptProperties();
-  const apiKey = props.getProperty('CLAUDE_API_KEY');
+  const apiKey = props.getProperty('GEMINI_API_KEY');
 
-  const response = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${LLM_MODEL}:generateContent?key=${apiKey}`;
+
+  const response = UrlFetchApp.fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type':      'application/json',
-      'x-api-key':         apiKey,
-      'anthropic-version': '2023-06-01'
-    },
+    headers: { 'Content-Type': 'application/json' },
     payload: JSON.stringify({
-      model:      LLM_MODEL,
-      max_tokens: 1000,
-      system:     systemPrompt,
-      messages:   [{ role: 'user', content: userMessage }]
+      system_instruction: {
+        parts: [{ text: systemPrompt }]
+      },
+      contents: [
+        { role: 'user', parts: [{ text: userMessage }] }
+      ],
+      generationConfig: {
+        maxOutputTokens: 1000
+      }
     }),
     muteHttpExceptions: true
   });
 
   const data = JSON.parse(response.getContentText());
   if (data.error) throw new Error(data.error.message);
-  return data.content?.[0]?.text || '無法取得回應';
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '無法取得回應';
 }
