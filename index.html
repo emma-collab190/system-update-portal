@@ -212,10 +212,19 @@ function renderSearch() {
     <input class="search-input" id="searchKw" placeholder="搜尋關鍵字或 Redmine 編號..." oninput="filterSearch()">
     <div class="filter-row">
       <select id="fSys" onchange="filterSearch()">
-        <option value="">所有系統 — FonTour=套票 ｜ FonTicket=票務 ｜ Traveline=前端</option>
+        <option value="">所有系統</option>
         <option value="FonTour">FonTour（套票）</option>
         <option value="FonTicket">FonTicket（票務）</option>
         <option value="Traveline">Traveline（前端網頁）</option>
+      </select>
+      <select id="fType" onchange="filterSearch()">
+        <option value="">所有更新類型</option>
+        <option value="BUG">BUG</option>
+        <option value="程式邏輯調整">程式邏輯調整</option>
+        <option value="產品線功能優化">產品線功能優化</option>
+        <option value="新開發項目/通路">新開發項目/通路</option>
+        <option value="使用者功能優化">使用者功能優化</option>
+        <option value="設計行銷需求">設計行銷需求</option>
       </select>
       <select id="fImpact" onchange="filterSearch()">
         <option value="">所有影響程度</option>
@@ -232,10 +241,12 @@ function renderSearch() {
 function filterSearch() {
   const kw     = (document.getElementById('searchKw')?.value || '').toLowerCase();
   const sys    = document.getElementById('fSys')?.value || '';
+  const type   = document.getElementById('fType')?.value || '';
   const impact = document.getElementById('fImpact')?.value || '';
 
   const filtered = records.filter(r => {
     if (sys    && r.system !== sys) return false;
+    if (type   && r.type !== type) return false;
     if (impact && r.impact !== impact) return false;
     if (kw && !`${r.summary} ${r.content} ${r.redmineNo}`.toLowerCase().includes(kw)) return false;
     return true;
