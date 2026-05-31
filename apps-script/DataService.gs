@@ -11,28 +11,41 @@ function getData() {
   return data;
 }
 
+// 不讀取追蹤用分頁
+const SKIP_SHEETS = ['查詢記錄', '查看記錄'];
+
 function readSheetData() {
   const props = PropertiesService.getScriptProperties();
   const sheetId = props.getProperty('SPREADSHEET_ID');
   const ss = SpreadsheetApp.openById(sheetId);
-  const sheet = ss.getSheets()[0]; // 第一個分頁為主資料
-  const rows = sheet.getDataRange().getValues();
 
-  if (rows.length < 2) return { updatedAt: nowString(), records: [] };
+  // 讀取所有分頁（排除追蹤用分頁），合併成一份資料
+  const allSheets = ss.getSheets().filter(s => !SKIP_SHEETS.includes(s.getName()));
+  const allRecords = [];
 
-  const headers = rows[0].map(h => String(h).trim());
-  const records = rows.slice(1)
-    .filter(row => row.some(cell => cell !== '' && cell !== null))
-    .map(row => rowToRecord(headers, row));
+  allSheets.forEach(sheet => {
+    const rows = sheet.getDataRange().getValues();
+    if (rows.length < 2) return;
+    const headers = rows[0].map(h => String(h).trim());
+    rows.slice(1)
+      .filter(row => row.some(cell => cell !== '' && cell !== null))
+      .forEach(row => allRecords.push(rowToRecord(headers, row)));
+  });
 
-  return { updatedAt: nowString(), records };
+  return { updatedAt: nowString(), records: allRecords };
 }
 
 function rowToRecord(headers, row) {
   const get = (...keys) => {
     for (const k of keys) {
       const idx = headers.findIndex(h => h.includes(k));
-      if (idx >= 0) return String(row[idx] || '').trim();
+      if (idx >= 0) {
+        const val = row[idx];
+        if (val instanceof Date) {
+          return Utilities.formatDate(val, 'Asia/Taipei', 'yyyy/MM/dd');
+        }
+        return String(val || '').trim();
+      }
     }
     return '';
   };

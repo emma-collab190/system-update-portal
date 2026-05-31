@@ -1,5 +1,5 @@
 const LLM_PROVIDER = 'google';
-const LLM_MODEL    = 'gemini-2.0-flash';
+const LLM_MODEL    = 'gemini-1.5-flash';
 
 const SYSTEM_PROMPT = `【最高優先規則】
 你只能根據下方提供的更新紀錄回答問題。
