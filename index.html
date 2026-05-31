@@ -189,12 +189,12 @@ function recordCard(r, idx) {
         ${impactBadge(r.impact)}
       </div>
     </div>
-    ${r.relDept ? `<div style="font-size:12px;color:var(--text2);margin-bottom:6px"><i class="ti ti-users" style="font-size:12px"></i> 相關部門：${esc(r.relDept)}</div>` : ''}
     <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
       ${r.date ? `<span style="font-size:12px;color:var(--text3)"><i class="ti ti-calendar"></i> ${esc(r.date)}</span>` : ''}
       ${r.redmineNo ? `<span style="font-size:12px;color:var(--text3)"># ${esc(r.redmineNo)}</span>` : ''}
       ${r.redmineUrl ? `<a href="${esc(r.redmineUrl)}" target="_blank" rel="noopener" style="font-size:12px;color:var(--blue-text);text-decoration:none"><i class="ti ti-external-link"></i> Redmine</a>` : ''}
       <button onclick="toggleDetail('${idx}')" style="font-size:12px;color:var(--blue-text);background:none;border:none;cursor:pointer;padding:0">展開全文</button>
+      ${r.relDept ? `<span style="font-size:12px;color:var(--text3);margin-left:auto"><i class="ti ti-users" style="font-size:12px"></i> ${esc(r.relDept)}</span>` : ''}
     </div>
     <div id="detail-${idx}" style="display:none;margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);font-size:13px;color:var(--text2);line-height:1.7">${esc(r.content)}</div>
   </div>`;
