@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>系統更新查詢平台</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#ffffff; --bg2:#f5f5f3; --bg3:#eeede9;
+  --text1:#1a1a18; --text2:#5f5e5a; --text3:#888780;
+  --border:rgba(0,0,0,0.12); --border2:rgba(0,0,0,0.2);
+  --blue-bg:#e6f1fb; --blue-text:#0c447c;
+  --green-bg:#eaf3de; --green-text:#3b6d11;
+  --amber-bg:#faeeda; --amber-text:#854f0b;
+  --red-bg:#fcebeb; --red-text:#a32d2d;
+  --gray-bg:#f0f0ee; --gray-text:#5f5e5a;
+  --radius:8px; --radius-lg:12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#1e1e1c; --bg2:#2c2c2a; --bg3:#3a3a38;
+    --text1:#f0ede8; --text2:#b4b2a9; --text3:#888780;
+    --border:rgba(255,255,255,0.12); --border2:rgba(255,255,255,0.22);
+    --blue-bg:#042c53; --blue-text:#85b7eb;
+    --green-bg:#173404; --green-text:#97c459;
+    --amber-bg:#412402; --amber-text:#ef9f27;
+    --red-bg:#501313; --red-text:#f09595;
+    --gray-bg:#2c2c2a; --gray-text:#b4b2a9;
+  }
+}
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg3); color:var(--text1); min-height:100vh; line-height:1.6; }
+.app-shell { max-width:860px; margin:0 auto; padding:0 16px 60px; }
+.top-bar { background:var(--bg); border-bottom:0.5px solid var(--border); position:sticky; top:0; z-index:100; margin:0 -16px; padding:0 16px; }
+.top-bar-inner { max-width:860px; margin:0 auto; display:flex; align-items:center; gap:12px; padding:14px 0; }
+.top-bar h1 { font-size:16px; font-weight:500; flex:1; }
+.top-bar p { font-size:12px; color:var(--text3); }
+.badge { font-size:11px; padding:3px 9px; border-radius:999px; font-weight:500; background:var(--blue-bg); color:var(--blue-text); white-space:nowrap; }
+.tabs { display:flex; gap:2px; background:var(--bg); border-bottom:0.5px solid var(--border); padding:0 16px; margin:0 -16px 0; }
+.tab { font-size:13px; padding:12px 18px; border:none; background:none; color:var(--text2); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-0.5px; display:flex; align-items:center; gap:6px; font-family:inherit; }
+.tab.active { color:var(--text1); font-weight:500; border-bottom-color:var(--text1); }
+.tab:hover:not(.active) { color:var(--text1); }
+.tab-panel { display:none; padding-top:24px; }
+.tab-panel.active { display:block; }
+.card { background:var(--bg); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:1.25rem; margin-bottom:12px; }
+.notice { background:var(--bg2); border-radius:var(--radius); padding:12px 16px; margin-bottom:20px; font-size:13px; color:var(--text2); line-height:1.7; }
+.updated-at { font-size:12px; color:var(--text3); }
+.section-label { font-size:11px; font-weight:500; color:var(--text3); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:10px; }
+.tag { font-size:11px; padding:2px 8px; border-radius:var(--radius); font-weight:500; white-space:nowrap; }
+.tag-blue  { background:var(--blue-bg);  color:var(--blue-text); }
+.tag-green { background:var(--green-bg); color:var(--green-text); }
+.tag-amber { background:var(--amber-bg); color:var(--amber-text); }
+.tag-red   { background:var(--red-bg);   color:var(--red-text); }
+.tag-gray  { background:var(--gray-bg);  color:var(--gray-text); }
+.empty { text-align:center; padding:3rem 1rem; color:var(--text3); font-size:14px; }
+.empty i { font-size:36px; display:block; margin-bottom:12px; }
+.loading { text-align:center; padding:2rem; color:var(--text3); font-size:13px; }
+.search-input { width:100%; font-size:14px; padding:10px 14px; border:0.5px solid var(--border2); border-radius:var(--radius); background:var(--bg); color:var(--text1); font-family:inherit; margin-bottom:16px; }
+.search-input:focus { outline:none; border-color:var(--text3); }
+.filter-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+.filter-row select { font-size:13px; padding:7px 10px; border:0.5px solid var(--border2); border-radius:var(--radius); background:var(--bg); color:var(--text1); font-family:inherit; }
+.hint-bar { font-size:12px; color:var(--text3); margin-bottom:12px; }
+.ai-row { display:flex; gap:8px; }
+textarea { flex:1; min-height:80px; resize:none; font-size:14px; padding:10px 12px; border-radius:var(--radius); border:0.5px solid var(--border2); background:var(--bg); color:var(--text1); font-family:inherit; line-height:1.5; }
+textarea:focus { outline:none; border-color:var(--text3); }
+.send-btn { align-self:flex-end; padding:9px 18px; font-size:13px; border-radius:var(--radius); border:0.5px solid var(--border2); background:var(--text1); color:var(--bg); cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:6px; font-family:inherit; font-weight:500; }
+.send-btn:hover { opacity:0.85; }
+.send-btn:disabled { opacity:0.4; cursor:not-allowed; }
+.chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+.chip-group-label { font-size:11px; color:var(--text3); margin-right:4px; align-self:center; }
+.chip { font-size:12px; padding:4px 12px; border-radius:999px; border:0.5px solid var(--border2); background:var(--bg2); color:var(--text2); cursor:pointer; font-family:inherit; }
+.chip:hover { color:var(--text1); border-color:var(--text3); }
+.ai-answer { margin-top:16px; padding-top:16px; border-top:0.5px solid var(--border); font-size:14px; line-height:1.8; display:none; }
+.ai-answer.show { display:block; }
+.ai-sources { margin-top:14px; padding-top:14px; border-top:0.5px solid var(--border); }
+.source-item { font-size:12px; color:var(--text3); padding:4px 0; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.thinking { color:var(--text3); font-size:13px; display:flex; align-items:center; gap:8px; }
+.dots { display:inline-flex; gap:4px; }
+.dots span { width:5px; height:5px; border-radius:50%; background:var(--text3); animation:bounce 1.2s infinite; }
+.dots span:nth-child(2) { animation-delay:.2s; }
+.dots span:nth-child(3) { animation-delay:.4s; }
+@keyframes bounce { 0%,80%,100%{opacity:.3} 40%{opacity:1} }
+.hot-section { margin-bottom:16px; }
+.hot-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.hot-chip { font-size:12px; padding:4px 12px; border-radius:999px; border:0.5px solid var(--border2); background:var(--blue-bg); color:var(--blue-text); cursor:pointer; font-family:inherit; }
+.hot-chip:hover { opacity:0.8; }
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <div class="top-bar-inner">
+    <i class="ti ti-database" style="font-size:20px;color:var(--text2)"></i>
+    <div style="flex:1">
+      <h1>系統更新查詢平台</h1>
+      <p>FonTour・FonTicket・Traveline</p>
+    </div>
+    <span class="badge" id="countBadge">載入中...</span>
+  </div>
+</div>
+<div class="app-shell">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('ai')"><i class="ti ti-sparkles"></i> AI 問答</button>
+    <button class="tab" onclick="switchTab('search')"><i class="ti ti-search"></i> 全文搜尋</button>
+    <button class="tab" onclick="switchTab('recent')"><i class="ti ti-clock"></i> 最近更新</button>
+  </div>
+  <div class="notice" id="noticeBox" style="margin-top:16px">
+    這裡記錄了 FonTour、FonTicket、Traveline 的系統更新歷程。你可以用 AI 問答直接提問，或在全文搜尋中篩選查看。資料每月由導入課更新。
+    <br><span class="updated-at" id="updatedAt"></span>
+  </div>
+  <div id="tab-ai" class="tab-panel active"></div>
+  <div id="tab-search" class="tab-panel"></div>
+  <div id="tab-recent" class="tab-panel"></div>
+</div>
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────────────
+const GAS_URL = 'YOUR_WEB_APP_URL_HERE'; // replace with Apps Script Web App URL
+// ────────────────────────────────────────────────────────────────────────
+
+let records = [];
+let stats   = { hotTopics: [], hotRecords: [] };
+
+async function init() {
+  try {
+    const [dataRes, statsRes] = await Promise.all([
+      fetch(`${GAS_URL}?action=data`).then(r => r.json()),
+      fetch(`${GAS_URL}?action=stats`).then(r => r.json())
+    ]);
+    records = dataRes.records || [];
+    stats   = statsRes || { hotTopics: [], hotRecords: [] };
+    document.getElementById('countBadge').textContent = `${records.length} 筆更新`;
+    document.getElementById('updatedAt').textContent  = dataRes.updatedAt ? `資料最後更新：${dataRes.updatedAt}` : '';
+  } catch(e) {
+    document.getElementById('countBadge').textContent = '載入失敗';
+    console.error('載入資料失敗:', e);
+  }
+  renderAI();
+  renderSearch();
+  renderRecent();
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) =>
+    t.classList.toggle('active', ['ai','search','recent'][i] === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function typeLabel(type, impact) {
+  if (impact === '高' && (type.includes('邏輯') || type.includes('調整')))
+    return '<span class="tag tag-red">🔴 重大異動</span>';
+  if (type.includes('BUG') || type.includes('Bug') || type.includes('修復') || type.includes('修正'))
+    return '<span class="tag tag-amber">🟡 Bug修復</span>';
+  if (type.includes('新開發') || type.includes('新增') || type.includes('新功能'))
+    return '<span class="tag tag-green">🟢 新功能</span>';
+  if (type.includes('優化') || type.includes('調整') || type.includes('流程') || type.includes('功能'))
+    return '<span class="tag tag-blue">🔵 流程調整</span>';
+  return '<span class="tag tag-gray">⬜ 內部調整</span>';
+}
+
+function impactBadge(impact) {
+  if (impact === '高') return '<span class="tag tag-red">影響：高</span>';
+  if (impact === '中') return '<span class="tag tag-amber">影響：中</span>';
+  if (impact === '低') return '<span class="tag tag-gray">影響：低</span>';
+  return '';
+}
+
+function isThisMonth(dateStr) {
+  if (!dateStr) return false;
+  const d = new Date(String(dateStr).replace(/\//g, '-'));
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+}
+
+function recordCard(r, idx) {
+  const summaryText = esc(r.summary || r.content.slice(0, 60));
+  const newBadge = isThisMonth(r.date) ? '<span class="tag tag-blue" style="font-size:10px;margin-right:4px">本月新增</span>' : '';
+  return `
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px">
+      <div style="font-size:14px;font-weight:500;flex:1;line-height:1.5">${newBadge}${summaryText}</div>
+      <div style="display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap">
+        ${r.system ? `<span class="tag tag-blue">${esc(r.system)}</span>` : ''}
+        ${typeLabel(r.type || '', r.impact || '')}
+        ${impactBadge(r.impact)}
+      </div>
+    </div>
+    ${r.relDept ? `<div style="font-size:12px;color:var(--text2);margin-bottom:6px"><i class="ti ti-users" style="font-size:12px"></i> 相關部門：${esc(r.relDept)}</div>` : ''}
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      ${r.date ? `<span style="font-size:12px;color:var(--text3)"><i class="ti ti-calendar"></i> ${esc(r.date)}</span>` : ''}
+      ${r.redmineNo ? `<span style="font-size:12px;color:var(--text3)"># ${esc(r.redmineNo)}</span>` : ''}
+      ${r.redmineUrl ? `<a href="${esc(r.redmineUrl)}" target="_blank" rel="noopener" style="font-size:12px;color:var(--blue-text);text-decoration:none"><i class="ti ti-external-link"></i> Redmine</a>` : ''}
+      <button onclick="toggleDetail('${idx}')" style="font-size:12px;color:var(--blue-text);background:none;border:none;cursor:pointer;padding:0">展開全文</button>
+    </div>
+    <div id="detail-${idx}" style="display:none;margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);font-size:13px;color:var(--text2);line-height:1.7">${esc(r.content)}</div>
+  </div>`;
+}
+
+function toggleDetail(idx) {
+  const el = document.getElementById('detail-' + idx);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+// ── 全文搜尋 Tab ──────────────────────────────────────────────────────
+function renderSearch() {
+  const el = document.getElementById('tab-search');
+  el.innerHTML = `
+    <input class="search-input" id="searchKw" placeholder="搜尋關鍵字或 Redmine 編號..." oninput="filterSearch()">
+    <div class="filter-row">
+      <select id="fSys" onchange="filterSearch()">
+        <option value="">所有系統 — FonTour=套票 ｜ FonTicket=票務 ｜ Traveline=前端</option>
+        <option value="FonTour">FonTour（套票）</option>
+        <option value="FonTicket">FonTicket（票務）</option>
+        <option value="Traveline">Traveline（前端網頁）</option>
+      </select>
+      <select id="fImpact" onchange="filterSearch()">
+        <option value="">所有影響程度</option>
+        <option value="高">高</option>
+        <option value="中">中</option>
+        <option value="低">低</option>
+      </select>
+    </div>
+    <div class="hint-bar" id="searchHint">共 ${records.length} 筆</div>
+    <div id="searchResults"></div>`;
+  filterSearch();
+}
+
+function filterSearch() {
+  const kw     = (document.getElementById('searchKw')?.value || '').toLowerCase();
+  const sys    = document.getElementById('fSys')?.value || '';
+  const impact = document.getElementById('fImpact')?.value || '';
+
+  const filtered = records.filter(r => {
+    if (sys    && r.system !== sys) return false;
+    if (impact && r.impact !== impact) return false;
+    if (kw && !`${r.summary} ${r.content} ${r.redmineNo}`.toLowerCase().includes(kw)) return false;
+    return true;
+  });
+
+  const hint = document.getElementById('searchHint');
+  if (hint) hint.textContent = `顯示 ${filtered.length} / ${records.length} 筆`;
+
+  const container = document.getElementById('searchResults');
+  if (!container) return;
+  if (!filtered.length) {
+    container.innerHTML = records.length === 0
+      ? '<div class="empty"><i class="ti ti-database-off"></i>資料載入中，請稍候...</div>'
+      : '<div class="empty"><i class="ti ti-search-off"></i>找不到符合條件的更新</div>';
+    return;
+  }
+  container.innerHTML = filtered.slice(0, 80).map((r, i) => recordCard(r, 'search-' + i)).join('');
+}
+
+// ── 最近更新 Tab ──────────────────────────────────────────────────────
+function renderRecent() {
+  const el = document.getElementById('tab-recent');
+  const sorted = [...records].sort((a, b) => {
+    const da = new Date(String(a.date).replace(/\//g, '-') || 0);
+    const db = new Date(String(b.date).replace(/\//g, '-') || 0);
+    return db - da;
+  });
+
+  if (!sorted.length) {
+    el.innerHTML = '<div class="empty"><i class="ti ti-clock-off"></i>尚無更新資料</div>';
+    return;
+  }
+
+  let html = '';
+  let lastMonth = '';
+  sorted.slice(0, 100).forEach((r, i) => {
+    const month = String(r.date || '').slice(0, 7) || '未知日期';
+    if (month !== lastMonth) {
+      html += `<div style="font-size:12px;font-weight:500;color:var(--text3);margin:16px 0 8px;text-transform:uppercase;letter-spacing:0.05em">${month}</div>`;
+      lastMonth = month;
+    }
+    html += recordCard(r, 'recent-' + i);
+  });
+  el.innerHTML = html;
+}
+
+// ── AI 問答 Tab ───────────────────────────────────────────────────────
+function renderAI() {
+  const el = document.getElementById('tab-ai');
+
+  const hotTopicsHtml = stats.hotTopics?.length
+    ? `<div class="hot-section card">
+        <div class="section-label">本月熱門主題</div>
+        <div class="hot-list">${stats.hotTopics.map(t =>
+          `<button class="hot-chip" onclick="setQ('${esc(t.topic)}相關的更新有哪些？')">${esc(t.topic)}</button>`
+        ).join('')}</div>
+       </div>`
+    : '';
+
+  const hotRecordsHtml = stats.hotRecords?.length
+    ? `<div class="hot-section card">
+        <div class="section-label">本月最多人查看</div>
+        <div class="hot-list">${stats.hotRecords.map(r =>
+          `<button class="hot-chip" onclick="setQ('#${esc(r.redmineNo)} 的更新內容是什麼？')">#${esc(r.redmineNo)}</button>`
+        ).join('')}</div>
+       </div>`
+    : '';
+
+  el.innerHTML = `
+    ${hotTopicsHtml}${hotRecordsHtml}
+    <div class="card">
+      <div class="section-label">輸入你的問題</div>
+      <div class="ai-row">
+        <textarea id="aiQ" placeholder="例如：退款流程目前怎麼運作？有哪些跟業務推廣相關的更新？FonTour 最近有什麼調整？"></textarea>
+        <button class="send-btn" onclick="askAI()" id="askBtn"><i class="ti ti-arrow-up"></i> 送出</button>
+      </div>
+      <p style="font-size:12px;color:var(--text3);margin-top:6px">Ctrl + Enter 快速送出</p>
+      <div class="chips">
+        <span class="chip-group-label">了解最新</span>
+        <button class="chip" onclick="setQ('這個月有哪些新功能上線？')">本月新功能</button>
+        <button class="chip" onclick="setQ('最近有什麼重大異動？')">重大異動</button>
+        <span class="chip-group-label">查功能邏輯</span>
+        <button class="chip" onclick="setQ('折價券目前怎麼運作？')">折價券邏輯</button>
+        <button class="chip" onclick="setQ('退款流程是什麼？')">退款流程</button>
+        <span class="chip-group-label">查 Bug</span>
+        <button class="chip" onclick="setQ('最近修了哪些 Bug？')">Bug 修復</button>
+        <span class="chip-group-label">業務影響</span>
+        <button class="chip" onclick="setQ('哪些更新影響業務推廣？')">業務推廣</button>
+        <button class="chip" onclick="setQ('有哪些前台頁面改版？')">前台改版</button>
+      </div>
+      <div class="ai-answer" id="aiAnswer"></div>
+    </div>`;
+
+  document.getElementById('aiQ').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) askAI();
+  });
+}
+
+function setQ(q) {
+  const el = document.getElementById('aiQ');
+  if (el) { el.value = q; el.focus(); }
+}
+
+async function askAI() {
+  const q = (document.getElementById('aiQ')?.value || '').trim();
+  if (!q) return;
+
+  const ansDiv = document.getElementById('aiAnswer');
+  const btn    = document.getElementById('askBtn');
+  ansDiv.className = 'ai-answer show';
+  ansDiv.innerHTML = '<div class="thinking">AI 分析中 <div class="dots"><span></span><span></span><span></span></div></div>';
+  btn.disabled = true;
+
+  try {
+    const res  = await fetch(`${GAS_URL}?action=ask`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q })
+    });
+    const data = await res.json();
+    const text = data.answer || '無法取得回應';
+
+    const formatted = text
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\n/g,'<br>')
+      .replace(/#(\d{4,6})/g,'<strong>#$1</strong>');
+
+    let sourcesHtml = '';
+    if (data.sources?.length) {
+      sourcesHtml = `<div class="ai-sources">
+        <div class="section-label" style="margin-bottom:6px">參考來源</div>
+        ${data.sources.map(s => `
+          <div class="source-item">
+            <span class="tag tag-blue">${esc(s.system)}</span>
+            <span>${esc(s.summary || '')}</span>
+            <span style="color:var(--text3)">${esc(s.date || '')}</span>
+            <span style="color:var(--text3)">#${esc(s.redmineNo || '')}</span>
+            ${s.impact ? impactBadge(s.impact) : ''}
+          </div>`).join('')}
+      </div>`;
+    }
+
+    ansDiv.innerHTML = formatted + sourcesHtml;
+  } catch(e) {
+    ansDiv.innerHTML = '<span style="color:var(--red-text)"><i class="ti ti-alert-circle"></i> 發生錯誤，請確認網路連線後再試。</span>';
+    console.error('AI 問答失敗:', e);
+  }
+  btn.disabled = false;
+}
+
+init();
+</script>
+</body>
+</html>
