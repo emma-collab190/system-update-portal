@@ -277,13 +277,13 @@ function filterSearch() {
 // ── 最近更新 Tab ──────────────────────────────────────────────────────
 function renderRecent() {
   const el = document.getElementById('tab-recent');
-  const sysList = [...new Set(records.map(r => r.system).filter(Boolean))].sort();
-
   el.innerHTML = `
     <div class="filter-row">
       <select id="rSys" onchange="filterRecent()">
         <option value="">所有系統</option>
-        ${sysList.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('')}
+        <option value="FonTour">FonTour（套票）</option>
+        <option value="FonTicket">FonTicket（票務）</option>
+        <option value="Traveline">Traveline（前端網頁）</option>
       </select>
     </div>
     <div class="hint-bar" id="recentHint"></div>
