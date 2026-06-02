@@ -62,6 +62,9 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backg
 .filter-row select { font-size:13px; padding:7px 10px; border:0.5px solid var(--border2); border-radius:var(--radius); background:var(--bg); color:var(--text1); font-family:inherit; }
 .hint-bar { font-size:12px; color:var(--text3); margin-bottom:12px; }
 .card-title { overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+.filter-row input[type="date"] { font-size:13px; padding:7px 10px; border:0.5px solid var(--border2); border-radius:var(--radius); background:var(--bg); color:var(--text1); font-family:inherit; }
+.clear-btn { font-size:12px; padding:6px 10px; border:0.5px solid var(--border2); border-radius:var(--radius); background:var(--bg2); color:var(--text2); cursor:pointer; font-family:inherit; white-space:nowrap; }
+.clear-btn:hover { color:var(--text1); border-color:var(--text3); }
 </style>
 </head>
 <body>
@@ -77,15 +80,15 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backg
 </div>
 <div class="app-shell">
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('search')"><i class="ti ti-search"></i> 全文搜尋</button>
-    <button class="tab" onclick="switchTab('recent')"><i class="ti ti-clock"></i> 最近更新</button>
+    <button class="tab active" onclick="switchTab('recent')"><i class="ti ti-clock"></i> 最近更新</button>
+    <button class="tab" onclick="switchTab('search')"><i class="ti ti-search"></i> 全文搜尋</button>
   </div>
   <div class="notice" id="noticeBox" style="margin-top:16px">
-    這裡記錄了 FonTour、FonTicket、Traveline 的系統更新歷程。在全文搜尋中輸入關鍵字或篩選條件查看。資料每月由導入課更新。
+    這裡記錄了 FonTour、FonTicket、Traveline 的系統更新歷程。在全文搜尋中輸入關鍵字或篩選條件查看。
     <br><span class="updated-at" id="updatedAt"></span>
   </div>
-  <div id="tab-search" class="tab-panel active"></div>
-  <div id="tab-recent" class="tab-panel"></div>
+  <div id="tab-recent" class="tab-panel active"></div>
+  <div id="tab-search" class="tab-panel"></div>
 </div>
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────────────
@@ -104,13 +107,13 @@ async function init() {
     document.getElementById('countBadge').textContent = '載入失敗';
     console.error('載入資料失敗:', e);
   }
-  renderSearch();
   renderRecent();
+  renderSearch();
 }
 
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach((t,i) =>
-    t.classList.toggle('active', ['search','recent'][i] === name));
+    t.classList.toggle('active', ['recent','search'][i] === name));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
 }
@@ -177,6 +180,18 @@ function toggleDetail(idx) {
 // ── 全文搜尋 Tab ──────────────────────────────────────────────────────
 function renderSearch() {
   const el = document.getElementById('tab-search');
+  const today = new Date();
+  const fromDefault = new Date(today);
+  fromDefault.setMonth(today.getMonth() - 1);
+  const toStr   = today.toISOString().slice(0, 10);
+  const fromStr = fromDefault.toISOString().slice(0, 10);
+
+  const deptSet = new Set();
+  records.forEach(r => {
+    if (r.relDept) r.relDept.split(/[,，、\/]/).map(d => d.trim()).filter(Boolean).forEach(d => deptSet.add(d));
+  });
+  const deptList = [...deptSet].sort();
+
   el.innerHTML = `
     <input class="search-input" id="searchKw" placeholder="搜尋關鍵字或 Redmine 編號..." oninput="filterSearch()">
     <div class="filter-row">
@@ -197,23 +212,55 @@ function renderSearch() {
         <option value="低">低</option>
       </select>
     </div>
-    <div class="hint-bar" id="searchHint">共 ${records.length} 筆</div>
+    <div class="filter-row">
+      <select id="fDept" onchange="filterSearch()">
+        <option value="">所有相關部門</option>
+        ${deptList.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('')}
+      </select>
+      <input type="date" id="fDateFrom" value="${fromStr}" onchange="filterSearch()">
+      <span style="font-size:13px;color:var(--text3);align-self:center">至</span>
+      <input type="date" id="fDateTo" value="${toStr}" onchange="filterSearch()">
+      <button class="clear-btn" onclick="clearDates()"><i class="ti ti-x"></i> 清除日期</button>
+    </div>
+    <div class="hint-bar" id="searchHint"></div>
     <div id="searchResults"></div>`;
   filterSearch();
 }
 
+function clearDates() {
+  const from = document.getElementById('fDateFrom');
+  const to   = document.getElementById('fDateTo');
+  if (from) from.value = '';
+  if (to)   to.value   = '';
+  filterSearch();
+}
+
 function filterSearch() {
-  const kw     = (document.getElementById('searchKw')?.value || '').toLowerCase();
-  const sys    = document.getElementById('fSys')?.value || '';
-  const type   = document.getElementById('fType')?.value || '';
-  const impact = document.getElementById('fImpact')?.value || '';
+  const kw       = (document.getElementById('searchKw')?.value || '').toLowerCase();
+  const sys      = document.getElementById('fSys')?.value || '';
+  const type     = document.getElementById('fType')?.value || '';
+  const impact   = document.getElementById('fImpact')?.value || '';
+  const dept     = document.getElementById('fDept')?.value || '';
+  const dateFrom = document.getElementById('fDateFrom')?.value || '';
+  const dateTo   = document.getElementById('fDateTo')?.value || '';
 
   const filtered = records.filter(r => {
     if (sys    && r.system !== sys) return false;
     if (type   && r.type !== type) return false;
     if (impact && r.impact !== impact) return false;
-    if (kw && !`${r.summary} ${r.content} ${r.redmineNo}`.toLowerCase().includes(kw)) return false;
+    if (dept   && !r.relDept.includes(dept)) return false;
+    if (kw && !`${r.summary} ${r.content} ${r.redmineNo} ${r.relDept}`.toLowerCase().includes(kw)) return false;
+    if (dateFrom || dateTo) {
+      const d = new Date(String(r.date || '').replace(/\//g, '-'));
+      if (isNaN(d.getTime())) return false;
+      if (dateFrom && d < new Date(dateFrom)) return false;
+      if (dateTo   && d > new Date(dateTo + 'T23:59:59')) return false;
+    }
     return true;
+  }).sort((a, b) => {
+    const da = new Date(String(a.date).replace(/\//g, '-') || 0);
+    const db = new Date(String(b.date).replace(/\//g, '-') || 0);
+    return db - da;
   });
 
   const hint = document.getElementById('searchHint');
@@ -233,28 +280,57 @@ function filterSearch() {
 // ── 最近更新 Tab ──────────────────────────────────────────────────────
 function renderRecent() {
   const el = document.getElementById('tab-recent');
-  const sorted = [...records].sort((a, b) => {
+  const sysList = [...new Set(records.map(r => r.system).filter(Boolean))].sort();
+
+  el.innerHTML = `
+    <div class="filter-row">
+      <select id="rSys" onchange="filterRecent()">
+        <option value="">所有系統</option>
+        ${sysList.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="hint-bar" id="recentHint"></div>
+    <div id="recentResults"></div>`;
+  filterRecent();
+}
+
+function filterRecent() {
+  const sys = document.getElementById('rSys')?.value || '';
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+  const filtered = records.filter(r => {
+    if (sys && r.system !== sys) return false;
+    const d = new Date(String(r.date || '').replace(/\//g, '-'));
+    if (isNaN(d.getTime())) return false;
+    return d >= oneMonthAgo;
+  }).sort((a, b) => {
     const da = new Date(String(a.date).replace(/\//g, '-') || 0);
     const db = new Date(String(b.date).replace(/\//g, '-') || 0);
     return db - da;
   });
 
-  if (!sorted.length) {
-    el.innerHTML = '<div class="empty"><i class="ti ti-clock-off"></i>尚無更新資料</div>';
+  const hint = document.getElementById('recentHint');
+  if (hint) hint.textContent = `近 30 天共 ${filtered.length} 筆`;
+
+  const container = document.getElementById('recentResults');
+  if (!container) return;
+  if (!filtered.length) {
+    container.innerHTML = '<div class="empty"><i class="ti ti-clock-off"></i>近 30 天無更新資料</div>';
     return;
   }
 
   let html = '';
   let lastMonth = '';
-  sorted.slice(0, 100).forEach((r, i) => {
+  filtered.forEach((r, i) => {
     const month = String(r.date || '').slice(0, 7) || '未知日期';
     if (month !== lastMonth) {
-      html += `<div style="font-size:12px;font-weight:500;color:var(--text3);margin:16px 0 8px;text-transform:uppercase;letter-spacing:0.05em">${month}</div>`;
+      html += `<div style="font-size:12px;font-weight:500;color:var(--text3);margin:16px 0 8px;letter-spacing:0.05em">${month}</div>`;
       lastMonth = month;
     }
     html += recordCard(r, 'recent-' + i);
   });
-  el.innerHTML = html;
+  container.innerHTML = html;
 }
 
 
