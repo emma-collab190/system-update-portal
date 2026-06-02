@@ -61,30 +61,7 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backg
 .filter-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
 .filter-row select { font-size:13px; padding:7px 10px; border:0.5px solid var(--border2); border-radius:var(--radius); background:var(--bg); color:var(--text1); font-family:inherit; }
 .hint-bar { font-size:12px; color:var(--text3); margin-bottom:12px; }
-.ai-row { display:flex; gap:8px; }
-textarea { flex:1; min-height:80px; resize:none; font-size:14px; padding:10px 12px; border-radius:var(--radius); border:0.5px solid var(--border2); background:var(--bg); color:var(--text1); font-family:inherit; line-height:1.5; }
-textarea:focus { outline:none; border-color:var(--text3); }
-.send-btn { align-self:flex-end; padding:9px 18px; font-size:13px; border-radius:var(--radius); border:0.5px solid var(--border2); background:var(--text1); color:var(--bg); cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:6px; font-family:inherit; font-weight:500; }
-.send-btn:hover { opacity:0.85; }
-.send-btn:disabled { opacity:0.4; cursor:not-allowed; }
-.chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
-.chip-group-label { font-size:11px; color:var(--text3); margin-right:4px; align-self:center; }
-.chip { font-size:12px; padding:4px 12px; border-radius:999px; border:0.5px solid var(--border2); background:var(--bg2); color:var(--text2); cursor:pointer; font-family:inherit; }
-.chip:hover { color:var(--text1); border-color:var(--text3); }
-.ai-answer { margin-top:16px; padding-top:16px; border-top:0.5px solid var(--border); font-size:14px; line-height:1.8; display:none; }
-.ai-answer.show { display:block; }
-.ai-sources { margin-top:14px; padding-top:14px; border-top:0.5px solid var(--border); }
-.source-item { font-size:12px; color:var(--text3); padding:4px 0; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.thinking { color:var(--text3); font-size:13px; display:flex; align-items:center; gap:8px; }
-.dots { display:inline-flex; gap:4px; }
-.dots span { width:5px; height:5px; border-radius:50%; background:var(--text3); animation:bounce 1.2s infinite; }
-.dots span:nth-child(2) { animation-delay:.2s; }
-.dots span:nth-child(3) { animation-delay:.4s; }
-@keyframes bounce { 0%,80%,100%{opacity:.3} 40%{opacity:1} }
-.hot-section { margin-bottom:16px; }
-.hot-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
-.hot-chip { font-size:12px; padding:4px 12px; border-radius:999px; border:0.5px solid var(--border2); background:var(--blue-bg); color:var(--blue-text); cursor:pointer; font-family:inherit; }
-.hot-chip:hover { opacity:0.8; }
+.card-title { overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
 </style>
 </head>
 <body>
@@ -100,16 +77,14 @@ textarea:focus { outline:none; border-color:var(--text3); }
 </div>
 <div class="app-shell">
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('ai')"><i class="ti ti-sparkles"></i> AI 問答</button>
-    <button class="tab" onclick="switchTab('search')"><i class="ti ti-search"></i> 全文搜尋</button>
+    <button class="tab active" onclick="switchTab('search')"><i class="ti ti-search"></i> 全文搜尋</button>
     <button class="tab" onclick="switchTab('recent')"><i class="ti ti-clock"></i> 最近更新</button>
   </div>
   <div class="notice" id="noticeBox" style="margin-top:16px">
-    這裡記錄了 FonTour、FonTicket、Traveline 的系統更新歷程。你可以用 AI 問答直接提問，或在全文搜尋中篩選查看。資料每月由導入課更新。
+    這裡記錄了 FonTour、FonTicket、Traveline 的系統更新歷程。在全文搜尋中輸入關鍵字或篩選條件查看。資料每月由導入課更新。
     <br><span class="updated-at" id="updatedAt"></span>
   </div>
-  <div id="tab-ai" class="tab-panel active"></div>
-  <div id="tab-search" class="tab-panel"></div>
+  <div id="tab-search" class="tab-panel active"></div>
   <div id="tab-recent" class="tab-panel"></div>
 </div>
 <script>
@@ -118,30 +93,24 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbwpoMhhMtxbnYAxzFqAFyq_
 // ────────────────────────────────────────────────────────────────────────
 
 let records = [];
-let stats   = { hotTopics: [], hotRecords: [] };
 
 async function init() {
   try {
-    const [dataRes, statsRes] = await Promise.all([
-      fetch(`${GAS_URL}?action=data`).then(r => r.json()),
-      fetch(`${GAS_URL}?action=stats`).then(r => r.json())
-    ]);
+    const dataRes = await fetch(`${GAS_URL}?action=data`).then(r => r.json());
     records = dataRes.records || [];
-    stats   = statsRes || { hotTopics: [], hotRecords: [] };
     document.getElementById('countBadge').textContent = `${records.length} 筆更新`;
     document.getElementById('updatedAt').textContent  = dataRes.updatedAt ? `資料最後更新：${dataRes.updatedAt}` : '';
   } catch(e) {
     document.getElementById('countBadge').textContent = '載入失敗';
     console.error('載入資料失敗:', e);
   }
-  renderAI();
   renderSearch();
   renderRecent();
 }
 
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach((t,i) =>
-    t.classList.toggle('active', ['ai','search','recent'][i] === name));
+    t.classList.toggle('active', ['search','recent'][i] === name));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
 }
@@ -154,7 +123,7 @@ function typeLabel(type, impact) {
   if (impact === '高' && (type.includes('邏輯') || type.includes('調整')))
     return '<span class="tag tag-red">🔴 重大異動</span>';
   if (type.includes('BUG') || type.includes('Bug') || type.includes('修復') || type.includes('修正'))
-    return '<span class="tag tag-amber">🟡 Bug修復</span>';
+    return '<span class="tag tag-red">🐛 Bug修復</span>';
   if (type.includes('新開發') || type.includes('新增') || type.includes('新功能'))
     return '<span class="tag tag-green">🟢 新功能</span>';
   if (type.includes('優化') || type.includes('調整') || type.includes('流程') || type.includes('功能'))
@@ -177,12 +146,12 @@ function isThisMonth(dateStr) {
 }
 
 function recordCard(r, idx) {
-  const summaryText = esc(r.summary || r.content.slice(0, 60));
   const newBadge = isThisMonth(r.date) ? '<span class="tag tag-blue" style="font-size:10px;margin-right:4px">本月新增</span>' : '';
+  const hasSummary = r.summary && r.summary.trim();
   return `
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px">
-      <div style="font-size:14px;font-weight:500;flex:1;line-height:1.5">${newBadge}${summaryText}</div>
+      <div class="card-title" style="font-size:14px;font-weight:500;flex:1;line-height:1.5">${newBadge}${esc(r.content)}</div>
       <div style="display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap">
         ${r.system ? `<span class="tag tag-blue">${esc(r.system)}</span>` : ''}
         ${typeLabel(r.type || '', r.impact || '')}
@@ -193,10 +162,10 @@ function recordCard(r, idx) {
       ${r.date ? `<span style="font-size:12px;color:var(--text3)"><i class="ti ti-calendar"></i> ${esc(r.date)}</span>` : ''}
       ${r.redmineNo ? `<span style="font-size:12px;color:var(--text3)"># ${esc(r.redmineNo)}</span>` : ''}
       ${r.redmineUrl ? `<a href="${esc(r.redmineUrl)}" target="_blank" rel="noopener" style="font-size:12px;color:var(--blue-text);text-decoration:none"><i class="ti ti-external-link"></i> Redmine</a>` : ''}
-      <button onclick="toggleDetail('${idx}')" style="font-size:12px;color:var(--blue-text);background:none;border:none;cursor:pointer;padding:0">展開全文</button>
+      ${hasSummary ? `<button onclick="toggleDetail('${idx}')" style="font-size:12px;color:var(--blue-text);background:none;border:none;cursor:pointer;padding:0">簡述內容</button>` : ''}
       ${r.relDept ? `<span style="font-size:12px;color:var(--text3);margin-left:auto"><i class="ti ti-users" style="font-size:12px"></i> ${esc(r.relDept)}</span>` : ''}
     </div>
-    <div id="detail-${idx}" style="display:none;margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);font-size:13px;color:var(--text2);line-height:1.7">${esc(r.content)}</div>
+    ${hasSummary ? `<div id="detail-${idx}" style="display:none;margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);font-size:13px;color:var(--text2);line-height:1.7">${esc(r.summary)}</div>` : ''}
   </div>`;
 }
 
@@ -219,12 +188,7 @@ function renderSearch() {
       </select>
       <select id="fType" onchange="filterSearch()">
         <option value="">所有更新類型</option>
-        <option value="BUG">BUG</option>
-        <option value="程式邏輯調整">程式邏輯調整</option>
-        <option value="產品線功能優化">產品線功能優化</option>
-        <option value="新開發項目/通路">新開發項目/通路</option>
-        <option value="使用者功能優化">使用者功能優化</option>
-        <option value="設計行銷需求">設計行銷需求</option>
+        ${[...new Set(records.map(r => r.type).filter(Boolean))].sort().map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('')}
       </select>
       <select id="fImpact" onchange="filterSearch()">
         <option value="">所有影響程度</option>
@@ -293,109 +257,6 @@ function renderRecent() {
   el.innerHTML = html;
 }
 
-// ── AI 問答 Tab ───────────────────────────────────────────────────────
-function renderAI() {
-  const el = document.getElementById('tab-ai');
-
-  const hotTopicsHtml = stats.hotTopics?.length
-    ? `<div class="hot-section card">
-        <div class="section-label">本月熱門主題</div>
-        <div class="hot-list">${stats.hotTopics.map(t =>
-          `<button class="hot-chip" onclick="setQ('${esc(t.topic)}相關的更新有哪些？')">${esc(t.topic)}</button>`
-        ).join('')}</div>
-       </div>`
-    : '';
-
-  const hotRecordsHtml = stats.hotRecords?.length
-    ? `<div class="hot-section card">
-        <div class="section-label">本月最多人查看</div>
-        <div class="hot-list">${stats.hotRecords.map(r =>
-          `<button class="hot-chip" onclick="setQ('#${esc(r.redmineNo)} 的更新內容是什麼？')">#${esc(r.redmineNo)}</button>`
-        ).join('')}</div>
-       </div>`
-    : '';
-
-  el.innerHTML = `
-    ${hotTopicsHtml}${hotRecordsHtml}
-    <div class="card">
-      <div class="section-label">輸入你的問題</div>
-      <div class="ai-row">
-        <textarea id="aiQ" placeholder="例如：退款流程目前怎麼運作？有哪些跟業務推廣相關的更新？FonTour 最近有什麼調整？"></textarea>
-        <button class="send-btn" onclick="askAI()" id="askBtn"><i class="ti ti-arrow-up"></i> 送出</button>
-      </div>
-      <p style="font-size:12px;color:var(--text3);margin-top:6px">Ctrl + Enter 快速送出</p>
-      <div class="chips">
-        <span class="chip-group-label">了解最新</span>
-        <button class="chip" onclick="setQ('這個月有哪些新功能上線？')">本月新功能</button>
-        <button class="chip" onclick="setQ('最近有什麼重大異動？')">重大異動</button>
-        <span class="chip-group-label">查功能邏輯</span>
-        <button class="chip" onclick="setQ('折價券目前怎麼運作？')">折價券邏輯</button>
-        <button class="chip" onclick="setQ('退款流程是什麼？')">退款流程</button>
-        <span class="chip-group-label">查 Bug</span>
-        <button class="chip" onclick="setQ('最近修了哪些 Bug？')">Bug 修復</button>
-        <span class="chip-group-label">業務影響</span>
-        <button class="chip" onclick="setQ('哪些更新影響業務推廣？')">業務推廣</button>
-        <button class="chip" onclick="setQ('有哪些前台頁面改版？')">前台改版</button>
-      </div>
-      <div class="ai-answer" id="aiAnswer"></div>
-    </div>`;
-
-  document.getElementById('aiQ').addEventListener('keydown', e => {
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) askAI();
-  });
-}
-
-function setQ(q) {
-  const el = document.getElementById('aiQ');
-  if (el) { el.value = q; el.focus(); }
-}
-
-async function askAI() {
-  const q = (document.getElementById('aiQ')?.value || '').trim();
-  if (!q) return;
-
-  const ansDiv = document.getElementById('aiAnswer');
-  const btn    = document.getElementById('askBtn');
-  ansDiv.className = 'ai-answer show';
-  ansDiv.innerHTML = '<div class="thinking">AI 分析中 <div class="dots"><span></span><span></span><span></span></div></div>';
-  btn.disabled = true;
-
-  try {
-    const res  = await fetch(`${GAS_URL}?action=ask`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question: q })
-    });
-    const data = await res.json();
-    const text = data.answer || '無法取得回應';
-
-    const formatted = text
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-      .replace(/\n/g,'<br>')
-      .replace(/#(\d{4,6})/g,'<strong>#$1</strong>');
-
-    let sourcesHtml = '';
-    if (data.sources?.length) {
-      sourcesHtml = `<div class="ai-sources">
-        <div class="section-label" style="margin-bottom:6px">參考來源</div>
-        ${data.sources.map(s => `
-          <div class="source-item">
-            <span class="tag tag-blue">${esc(s.system)}</span>
-            <span>${esc(s.summary || '')}</span>
-            <span style="color:var(--text3)">${esc(s.date || '')}</span>
-            <span style="color:var(--text3)">#${esc(s.redmineNo || '')}</span>
-            ${s.impact ? impactBadge(s.impact) : ''}
-          </div>`).join('')}
-      </div>`;
-    }
-
-    ansDiv.innerHTML = formatted + sourcesHtml;
-  } catch(e) {
-    ansDiv.innerHTML = '<span style="color:var(--red-text)"><i class="ti ti-alert-circle"></i> 發生錯誤，請確認網路連線後再試。</span>';
-    console.error('AI 問答失敗:', e);
-  }
-  btn.disabled = false;
-}
 
 init();
 </script>
