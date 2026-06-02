@@ -7,7 +7,11 @@ function getData() {
   if (cached) return JSON.parse(cached);
 
   const data = readSheetData();
-  cache.put(CACHE_KEY, JSON.stringify(data), CACHE_TTL);
+  try {
+    cache.put(CACHE_KEY, JSON.stringify(data), CACHE_TTL);
+  } catch(e) {
+    // Data exceeds 100KB cache limit — skip caching, serve directly
+  }
   return data;
 }
 
@@ -53,7 +57,7 @@ function rowToRecord(headers, row) {
   // A:更新時間  B:系統別  C:項目  D:Redmine編號  E:Redmine連結
   // F:回報單位(需求單位)  G:成本計價部門(略過)  H:類型
   // I:相關影響部門  J:摘要(AI生成)  K:影響程度
-  const summary = get('摘要');
+  const summary = get('小白話', '摘要');
   const content = get('項目');
   return {
     date:       get('更新時間'),
