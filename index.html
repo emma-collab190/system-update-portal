@@ -161,7 +161,7 @@ function recordCard(r, idx) {
     <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
       ${r.date ? `<span style="font-size:12px;color:var(--text3)"><i class="ti ti-calendar"></i> ${esc(r.date)}</span>` : ''}
       ${r.redmineNo ? `<span style="font-size:12px;color:var(--text3)"># ${esc(r.redmineNo)}</span>` : ''}
-      ${r.redmineUrl ? `<a href="${esc(r.redmineUrl)}" target="_blank" rel="noopener" style="font-size:12px;color:var(--blue-text);text-decoration:none"><i class="ti ti-external-link"></i> Redmine</a>` : ''}
+      ${r.redmineUrl && /^https?:\/\//i.test(r.redmineUrl) ? `<a href="${esc(r.redmineUrl)}" target="_blank" rel="noopener" style="font-size:12px;color:var(--blue-text);text-decoration:none"><i class="ti ti-external-link"></i> Redmine</a>` : ''}
       ${hasSummary ? `<button onclick="toggleDetail('${idx}')" style="font-size:12px;color:var(--blue-text);background:none;border:none;cursor:pointer;padding:0">簡述內容</button>` : ''}
       ${r.relDept ? `<span style="font-size:12px;color:var(--text3);margin-left:auto"><i class="ti ti-users" style="font-size:12px"></i> ${esc(r.relDept)}</span>` : ''}
     </div>

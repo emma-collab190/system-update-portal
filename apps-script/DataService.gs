@@ -28,12 +28,24 @@ function readSheetData() {
   const allRecords = [];
 
   allSheets.forEach(sheet => {
-    const rows = sheet.getDataRange().getValues();
+    const range = sheet.getDataRange();
+    const rows = range.getValues();
+    const richTexts = range.getRichTextValues();
     if (rows.length < 2) return;
     const headers = rows[0].map(h => String(h).trim());
+    const urlColIdx = headers.findIndex(h => h.includes('Redmine連結'));
+
     rows.slice(1)
       .filter(row => row.some(cell => cell !== '' && cell !== null))
-      .forEach(row => allRecords.push(rowToRecord(headers, row)));
+      .forEach((row, i) => {
+        const record = rowToRecord(headers, row);
+        if (urlColIdx >= 0) {
+          const rt = richTexts[i + 1]?.[urlColIdx];
+          const linkUrl = rt ? rt.getLinkUrl() : null;
+          if (linkUrl) record.redmineUrl = linkUrl;
+        }
+        allRecords.push(record);
+      });
   });
 
   return { updatedAt: nowString(), records: allRecords };
