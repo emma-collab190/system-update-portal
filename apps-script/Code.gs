@@ -5,7 +5,12 @@ function doGet(e) {
   if (action === 'search') return json(searchHandler(e.parameter.q || ''));
   if (action === 'stats')  return json(getStats());
 
-  return json({ error: 'unknown action. use: data | search | stats' });
+  // No action = serve the HTML frontend
+  const template = HtmlService.createTemplateFromFile('index');
+  template.gasUrl = ScriptApp.getService().getUrl();
+  return template.evaluate()
+    .setTitle('系統更新查詢平台')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 function doPost(e) {
