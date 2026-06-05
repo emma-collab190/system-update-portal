@@ -6,9 +6,7 @@ function doGet(e) {
   if (action === 'stats')  return json(getStats());
 
   // No action = serve the HTML frontend
-  const template = HtmlService.createTemplateFromFile('index');
-  template.gasUrl = ScriptApp.getService().getUrl();
-  return template.evaluate()
+  return HtmlService.createHtmlOutputFromFile('index')
     .setTitle('系統更新查詢平台')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }

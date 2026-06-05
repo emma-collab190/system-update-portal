@@ -91,22 +91,24 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backg
   <div id="tab-search" class="tab-panel"></div>
 </div>
 <script>
-const GAS_URL = '<?= gasUrl ?>';
-
 let records = [];
 
-async function init() {
-  try {
-    const dataRes = await fetch(`${GAS_URL}?action=data`).then(r => r.json());
-    records = dataRes.records || [];
-    document.getElementById('countBadge').textContent = `${records.length} 筆更新`;
-    document.getElementById('updatedAt').textContent  = dataRes.updatedAt ? `資料最後更新：${dataRes.updatedAt}` : '';
-  } catch(e) {
-    document.getElementById('countBadge').textContent = '載入失敗';
-    console.error('載入資料失敗:', e);
-  }
-  renderRecent();
-  renderSearch();
+function init() {
+  google.script.run
+    .withSuccessHandler(function(dataRes) {
+      records = dataRes.records || [];
+      document.getElementById('countBadge').textContent = `${records.length} 筆更新`;
+      document.getElementById('updatedAt').textContent  = dataRes.updatedAt ? `資料最後更新：${dataRes.updatedAt}` : '';
+      renderRecent();
+      renderSearch();
+    })
+    .withFailureHandler(function(err) {
+      document.getElementById('countBadge').textContent = '載入失敗';
+      console.error('載入失敗:', err);
+      renderRecent();
+      renderSearch();
+    })
+    .getData();
 }
 
 function switchTab(name) {
