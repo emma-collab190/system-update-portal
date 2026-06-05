@@ -65,6 +65,14 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backg
 .filter-row input[type="date"] { font-size:13px; padding:7px 10px; border:0.5px solid var(--border2); border-radius:var(--radius); background:var(--bg); color:var(--text1); font-family:inherit; }
 .clear-btn { font-size:12px; padding:6px 10px; border:0.5px solid var(--border2); border-radius:var(--radius); background:var(--bg2); color:var(--text2); cursor:pointer; font-family:inherit; white-space:nowrap; }
 .clear-btn:hover { color:var(--text1); border-color:var(--text3); }
+.dashboard { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+.dash-card { background:var(--bg); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:14px 18px; flex:1; min-width:110px; text-align:center; }
+.dash-label { font-size:12px; font-weight:500; color:var(--text2); margin-bottom:6px; }
+.dash-count { font-size:28px; font-weight:600; color:var(--text1); line-height:1; }
+.dash-sub { font-size:11px; color:var(--text3); margin-top:4px; }
+.dash-total { border-color:var(--blue-text); background:var(--blue-bg); }
+.dash-total .dash-count { color:var(--blue-text); }
+.dash-section-title { font-size:13px; font-weight:500; color:var(--text2); margin-bottom:12px; letter-spacing:0.02em; }
 </style>
 </head>
 <body>
@@ -275,17 +283,44 @@ function filterSearch() {
 
 function renderRecent() {
   const el = document.getElementById('tab-recent');
-  el.innerHTML = `
-    <div class="filter-row">
-      <select id="rSys" onchange="filterRecent()">
-        <option value="">所有系統</option>
-        <option value="FonTour">FonTour（套票）</option>
-        <option value="FonTicket">FonTicket（票務）</option>
-        <option value="Traveline">Traveline（前端網頁）</option>
-      </select>
-    </div>
-    <div class="hint-bar" id="recentHint"></div>
-    <div id="recentResults"></div>`;
+
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+  const recentAll = records.filter(function(r) {
+    const d = new Date(String(r.date || '').split('/').join('-'));
+    return !isNaN(d.getTime()) && d >= oneMonthAgo;
+  });
+
+  const systems = [
+    { key: 'FonTour',   sub: '套票' },
+    { key: 'FonTicket', sub: '票務' },
+    { key: 'Traveline', sub: '前端網頁' }
+  ];
+  const counts = {};
+  systems.forEach(function(s) { counts[s.key] = 0; });
+  recentAll.forEach(function(r) {
+    if (counts.hasOwnProperty(r.system)) counts[r.system]++;
+  });
+
+  const dashCards = systems.map(function(s) {
+    return '<div class="dash-card"><div class="dash-label">' + s.key + '</div><div class="dash-count">' + counts[s.key] + '</div><div class="dash-sub">' + s.sub + '</div></div>';
+  }).join('');
+
+  el.innerHTML =
+    '<div class="dash-section-title">近 30 天更新儀表板</div>' +
+    '<div class="dashboard">' + dashCards +
+    '<div class="dash-card dash-total"><div class="dash-label">合計</div><div class="dash-count">' + recentAll.length + '</div><div class="dash-sub">筆更新</div></div>' +
+    '</div>' +
+    '<div class="filter-row"><select id="rSys" onchange="filterRecent()">' +
+    '<option value="">所有系統</option>' +
+    '<option value="FonTour">FonTour（套票）</option>' +
+    '<option value="FonTicket">FonTicket（票務）</option>' +
+    '<option value="Traveline">Traveline（前端網頁）</option>' +
+    '</select></div>' +
+    '<div class="hint-bar" id="recentHint"></div>' +
+    '<div id="recentResults"></div>';
+
   filterRecent();
 }
 
