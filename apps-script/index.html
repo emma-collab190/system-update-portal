@@ -140,7 +140,7 @@ function impactBadge(impact) {
 
 function isThisMonth(dateStr) {
   if (!dateStr) return false;
-  const d = new Date(String(dateStr).replace(/\//g, '-'));
+  const d = new Date(String(dateStr).split('/').join('-'));
   const now = new Date();
   return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
 }
@@ -161,7 +161,7 @@ function recordCard(r, idx) {
     <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
       ${r.date ? `<span style="font-size:12px;color:var(--text3)"><i class="ti ti-calendar"></i> ${esc(r.date)}</span>` : ''}
       ${r.redmineNo ? `<span style="font-size:12px;color:var(--text3)"># ${esc(r.redmineNo)}</span>` : ''}
-      ${r.redmineUrl && /^https?:\/\//i.test(r.redmineUrl) ? `<a href="${esc(r.redmineUrl)}" target="_blank" rel="noopener" style="font-size:12px;color:var(--blue-text);text-decoration:none"><i class="ti ti-external-link"></i> Redmine</a>` : ''}
+      ${r.redmineUrl && r.redmineUrl.slice(0, 4) === 'http' ? `<a href="${esc(r.redmineUrl)}" target="_blank" rel="noopener" style="font-size:12px;color:var(--blue-text);text-decoration:none"><i class="ti ti-external-link"></i> Redmine</a>` : ''}
       ${hasSummary ? `<button onclick="toggleDetail('${idx}')" style="font-size:12px;color:var(--blue-text);background:none;border:none;cursor:pointer;padding:0">簡述內容</button>` : ''}
       ${r.relDept ? `<span style="font-size:12px;color:var(--text3);margin-left:auto"><i class="ti ti-users" style="font-size:12px"></i> ${esc(r.relDept)}</span>` : ''}
     </div>
@@ -184,7 +184,7 @@ function renderSearch() {
 
   const deptSet = new Set();
   records.forEach(r => {
-    if (r.relDept) r.relDept.split(/[,，、\/]/).map(d => d.trim()).filter(Boolean).forEach(d => deptSet.add(d));
+    if (r.relDept) r.relDept.replace(/，|、/g, ',').split(',').map(function(d){ return d.trim(); }).filter(Boolean).forEach(function(d){ deptSet.add(d); });
   });
   const deptList = [...deptSet].sort();
 
@@ -247,15 +247,15 @@ function filterSearch() {
     if (dept   && !r.relDept.includes(dept)) return false;
     if (kw && !`${r.summary} ${r.content} ${r.redmineNo} ${r.relDept}`.toLowerCase().includes(kw)) return false;
     if (dateFrom || dateTo) {
-      const d = new Date(String(r.date || '').replace(/\//g, '-'));
+      const d = new Date(String(r.date || '').split('/').join('-'));
       if (isNaN(d.getTime())) return false;
       if (dateFrom && d < new Date(dateFrom)) return false;
       if (dateTo   && d > new Date(dateTo + 'T23:59:59')) return false;
     }
     return true;
   }).sort((a, b) => {
-    const da = new Date(String(a.date).replace(/\//g, '-') || 0);
-    const db = new Date(String(b.date).replace(/\//g, '-') || 0);
+    const da = new Date(String(a.date).split('/').join('-') || 0);
+    const db = new Date(String(b.date).split('/').join('-') || 0);
     return db - da;
   });
 
@@ -296,12 +296,12 @@ function filterRecent() {
 
   const filtered = records.filter(r => {
     if (sys && r.system !== sys) return false;
-    const d = new Date(String(r.date || '').replace(/\//g, '-'));
+    const d = new Date(String(r.date || '').split('/').join('-'));
     if (isNaN(d.getTime())) return false;
     return d >= oneMonthAgo;
   }).sort((a, b) => {
-    const da = new Date(String(a.date).replace(/\//g, '-') || 0);
-    const db = new Date(String(b.date).replace(/\//g, '-') || 0);
+    const da = new Date(String(a.date).split('/').join('-') || 0);
+    const db = new Date(String(b.date).split('/').join('-') || 0);
     return db - da;
   });
 
