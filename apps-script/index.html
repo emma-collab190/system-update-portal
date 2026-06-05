@@ -73,12 +73,15 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; backg
 .dash-total { border-color:var(--blue-text); background:var(--blue-bg); }
 .dash-total .dash-count { color:var(--blue-text); }
 .dash-section-title { font-size:13px; font-weight:500; color:var(--text2); margin-bottom:12px; letter-spacing:0.02em; }
-.tag-fontour  { background:#FFF0E6; color:#CC4400; }
-.tag-fonticket { background:#FFECEC; color:#AA0000; }
-.dash-fontour { border-color:#FF6600 !important; background:#FFF3E8 !important; }
-.dash-fontour .dash-count { color:#CC4400; }
-.dash-fonticket { border-color:#CC1515 !important; background:#FFECEC !important; }
-.dash-fonticket .dash-count { color:#AA0000; }
+.tag-fontour   { background:#FFF0E6; color:#CC4400; }
+.tag-fonticket { background:#F5E8F7; color:#8B3A8A; }
+.tag-traveline { background:#E0F5F5; color:#1A6B6A; }
+.dash-fontour   { border-color:#FF6600 !important; background:#FFF3E8 !important; }
+.dash-fontour   .dash-count { color:#CC4400; }
+.dash-fonticket { border-color:#B565A7 !important; background:#F5E8F7 !important; }
+.dash-fonticket .dash-count { color:#8B3A8A; }
+.dash-traveline { border-color:#2A8F8C !important; background:#E0F5F5 !important; }
+.dash-traveline .dash-count { color:#1A6B6A; }
 </style>
 </head>
 <body>
@@ -140,6 +143,7 @@ function sysTag(system) {
   if (!system) return '';
   if (system === 'FonTour')   return '<span class="tag tag-fontour">'   + esc(system) + '</span>';
   if (system === 'FonTicket') return '<span class="tag tag-fonticket">' + esc(system) + '</span>';
+  if (system === 'Traveline') return '<span class="tag tag-traveline">' + esc(system) + '</span>';
   return '<span class="tag tag-blue">' + esc(system) + '</span>';
 }
 
@@ -317,7 +321,7 @@ function renderRecent() {
   });
 
   const dashCards = systems.map(function(s) {
-    const extra = s.key === 'FonTour' ? ' dash-fontour' : s.key === 'FonTicket' ? ' dash-fonticket' : '';
+    const extra = s.key === 'FonTour' ? ' dash-fontour' : s.key === 'FonTicket' ? ' dash-fonticket' : s.key === 'Traveline' ? ' dash-traveline' : '';
     return '<div class="dash-card' + extra + '"><div class="dash-label">' + s.key + '</div><div class="dash-count">' + counts[s.key] + '</div><div class="dash-sub">' + s.sub + '</div></div>';
   }).join('');
 
